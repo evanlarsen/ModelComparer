@@ -9,6 +9,7 @@ namespace Validator
 {
     internal class TypeComparer
     {
+        
         public List<string> CompareTypes(Type source, Type compare)
         {
             var discrepancies = new List<string>();
@@ -28,16 +29,6 @@ namespace Validator
             return discrepancies;
         }
 
-        List<string> CompareProperties(PropertyInfo sourceProp, PropertyInfo compareProp)
-        {
-            
-        }
-
-        List<string>  CompareFields(FieldInfo sourceField, FieldInfo compareField)
-        {
-
-        }
-
         List<string> CompareClasses(Type source, Type compare)
         {
             var discrepancies = new List<string>();
@@ -51,7 +42,7 @@ namespace Validator
                 var compareProp = FindSameProperty(sourceProp, compareProps);
                 if (compareProp == null)
                 {
-                    discrepancies.Add($"{sourceProp.PropertyType.FullName} - could not find matching property");
+                    discrepancies.Add($"{GetPropertyInfoFullName(sourceProp)} - could not find matching property");
                 }
                 discrepancies.AddRange(CompareProperties(sourceProp, compareProp));
             }
@@ -61,12 +52,22 @@ namespace Validator
                 var compareField = FindSameField(sourceField, compareFields);
                 if (compareField == null)
                 {
-                    discrepancies.Add($"{sourceField.FieldType.FullName} - could not find matching field");
+                    discrepancies.Add($"{GetFieldInfoFullName(sourceField)} - could not find matching field");
                 }
                 discrepancies.AddRange(CompareFields(sourceField, compareField));
             }
 
             return discrepancies;
+        }
+
+        List<string> CompareProperties(PropertyInfo sourceProp, PropertyInfo compareProp)
+        {
+            return CompareTypes(sourceProp.PropertyType, compareProp.PropertyType);
+        }
+
+        List<string> CompareFields(FieldInfo sourceField, FieldInfo compareField)
+        {
+            return CompareTypes(sourceField.FieldType, compareField.FieldType);
         }
 
         List<string> CompareGenericList(Type source, Type compare)
@@ -106,8 +107,8 @@ namespace Validator
         {
             if (TypeDeterminer.IsSimple(sourceProp.PropertyType))
             {
-                string sourcePropName = GetSimplePropertyInfoFullName(sourceProp);
-                return compareProps.FirstOrDefault(c => sourcePropName.Equals(GetSimplePropertyInfoFullName(c)));
+                string sourcePropName = GetPropertyInfoFullName(sourceProp);
+                return compareProps.FirstOrDefault(c => sourcePropName.Equals(GetPropertyInfoFullName(c)));
             }
             else
             {
@@ -119,8 +120,8 @@ namespace Validator
         {
             if (TypeDeterminer.IsSimple(sourceField.FieldType))
             {
-                string sourceFieldName = GetSimpleFieldInfoFullName(sourceField);
-                return compareFields.FirstOrDefault(c => sourceFieldName.Equals(GetSimpleFieldInfoFullName(c)));
+                string sourceFieldName = GetFieldInfoFullName(sourceField);
+                return compareFields.FirstOrDefault(c => sourceFieldName.Equals(GetFieldInfoFullName(c)));
             }
             else
             {
@@ -143,14 +144,22 @@ namespace Validator
             return $"{simpleType.FullName}";
         }
 
-        string GetSimplePropertyInfoFullName(PropertyInfo simpleProp)
+        string GetPropertyInfoFullName(PropertyInfo simpleProp)
         {
-            return $"{simpleProp.DeclaringType.FullName}.{simpleProp.Name} - {simpleProp.PropertyType.FullName}";
+            if (simpleProp.DeclaringType != null)
+            {
+                return $"{simpleProp.DeclaringType.FullName}.{simpleProp.Name} - {simpleProp.PropertyType.FullName}";
+            }
+            return $"{simpleProp.Name} - {simpleProp.PropertyType.FullName}";
         }
 
-        string GetSimpleFieldInfoFullName(FieldInfo simpleField)
+        string GetFieldInfoFullName(FieldInfo simpleField)
         {
-            return $"{simpleField.DeclaringType.FullName}.{simpleField.Name} - {simpleField.FieldType.FullName}";
+            if (simpleField.DeclaringType != null)
+            {
+                return $"{simpleField.DeclaringType.FullName}.{simpleField.Name} - {simpleField.FieldType.FullName}";
+            }
+            return $"{simpleField.Name} - {simpleField.FieldType.FullName}";
         }
     }
 }

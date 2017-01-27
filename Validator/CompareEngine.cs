@@ -34,17 +34,19 @@ namespace Validator
         ComparisonRun Compare(List<Type> sourceTypes, List<Type> comparisonTypes, string comparisonDirectory)
         {
             var run = new ComparisonRun(comparisonDirectory);
+            object lockObj = new object();
 
-            foreach(Type sourceType in sourceTypes)
+            Parallel.ForEach(sourceTypes, sourceType =>
             {
                 var compareType = comparisonTypes.FirstOrDefault(c => c.FullName.Equals(sourceType.FullName));
                 if (compareType == null)
                 {
                     run.Discrepancies.Add($"{sourceType.FullName} does not exist");
-                    continue;
+                    return;
                 }
-                run.Discrepancies.AddRange(comparer.CompareTypes(sourceType, compareType));
-            }
+                var discrepancies = comparer.CompareTypes(sourceType, compareType);
+                run.Discrepancies.AddRange(discrepancies);
+            });
 
             return run;
         }
